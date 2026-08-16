@@ -1,0 +1,268 @@
+"use client";
+
+import { useState, FormEvent, ChangeEvent } from "react";
+import { motion } from "framer-motion";
+import { Loader2, CheckCircle2, XCircle, ImagePlus } from "lucide-react";
+import type { AttendanceStatus } from "@/lib/supabaseClient";
+
+type SubmitState = "idle" | "submitting" | "success" | "error";
+
+export default function RsvpForm() {
+  const [fullName, setFullName] = useState("");
+  const [attendance, setAttendance] = useState<AttendanceStatus>("attending");
+  const [guestCount, setGuestCount] = useState(1);
+  const [contact, setContact] = useState("");
+  const [message, setMessage] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [state, setState] = useState<SubmitState>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg("Photo must be smaller than 5MB.");
+      return;
+    }
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setErrorMsg("");
+  };
+
+  const resetForm = () => {
+    setFullName("");
+    setAttendance("attending");
+    setGuestCount(1);
+    setContact("");
+    setMessage("");
+    setPhoto(null);
+    setPhotoPreview(null);
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !contact.trim()) {
+      setErrorMsg("Please fill in your name and a way to reach you.");
+      return;
+    }
+    setState("submitting");
+    setErrorMsg("");
+
+    try {
+      const formData = new FormData();
+      formData.append("full_name", fullName.trim());
+      formData.append("attendance_status", attendance);
+      formData.append("guest_count", String(guestCount));
+      formData.append("contact", contact.trim());
+      formData.append("message", message.trim());
+      if (attendance === "attending" && photo) {
+        formData.append("photo", photo);
+      }
+
+      const res = await fetch("/api/rsvp", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Something went wrong. Please try again.");
+      }
+
+      setState("success");
+      resetForm();
+    } catch (err) {
+      setState("error");
+      setErrorMsg(err instanceof Error ? err.message : "Unexpected error.");
+    }
+  };
+
+  return (
+    <section id="rsvp" className="bg-ruby-gradient px-6 py-24 sm:py-32">
+      <div className="mx-auto max-w-2xl">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8 }}
+          className="text-center"
+        >
+          <p className="font-display text-lg uppercase tracking-[0.3em] text-gold">
+            Kindly Respond
+          </p>
+          <h2 className="mt-3 font-serif text-4xl sm:text-5xl font-semibold text-ivory">
+            RSVP
+          </h2>
+          <p className="mt-3 font-sans text-sm text-ivory/70">
+            Please respond by 10th October 2026
+          </p>
+        </motion.div>
+
+        {state === "success" ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-12 flex flex-col items-center gap-4 rounded-2xl bg-ivory/10 p-10 text-center backdrop-blur"
+          >
+            <CheckCircle2 size={48} className="text-gold" />
+            <h3 className="font-serif text-2xl text-ivory">Thank You!</h3>
+            <p className="font-sans text-sm text-ivory/80">
+              Your RSVP has been received. We can&apos;t wait to celebrate with
+              you.
+            </p>
+            <button
+              onClick={() => setState("idle")}
+              className="mt-2 rounded-full border border-gold px-6 py-2 text-sm text-gold hover:bg-gold hover:text-ruby-dark transition-colors"
+            >
+              Submit Another Response
+            </button>
+          </motion.div>
+        ) : (
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.8 }}
+            onSubmit={handleSubmit}
+            className="mt-12 space-y-5 rounded-2xl bg-ivory/10 p-6 backdrop-blur sm:p-10"
+          >
+            <div>
+              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
+                placeholder="Your full name"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                Will You Be Attending?
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    { value: "attending", label: "Joyfully Attending" },
+                    { value: "declining", label: "Regretfully Declining" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => setAttendance(opt.value)}
+                    className={`rounded-lg border px-4 py-3 font-sans text-sm transition-colors ${
+                      attendance === opt.value
+                        ? "border-gold bg-gold text-ruby-dark font-medium"
+                        : "border-gold/30 bg-ivory/10 text-ivory hover:bg-ivory/20"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {attendance === "attending" && (
+              <div>
+                <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                  Number of Guests Attending
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={guestCount}
+                  onChange={(e) => setGuestCount(Number(e.target.value))}
+                  className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                Mobile Number / Email
+              </label>
+              <input
+                type="text"
+                required
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
+                placeholder="07X XXX XXXX or you@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                Message / Wishes For The Couple
+              </label>
+              <textarea
+                rows={3}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="w-full resize-none rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
+                placeholder="Share your wishes..."
+              />
+            </div>
+
+            {attendance === "attending" && (
+              <div>
+                <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                  Upload Your Photo
+                </label>
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-gold/40 bg-ivory/5 px-4 py-4 text-ivory/80 hover:bg-ivory/10">
+                  <ImagePlus size={20} className="text-gold" />
+                  <span className="font-sans text-sm">
+                    {photo ? photo.name : "Choose an image (max 5MB)"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
+                </label>
+                {photoPreview && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="mt-3 h-28 w-28 rounded-lg object-cover ring-2 ring-gold/40"
+                  />
+                )}
+              </div>
+            )}
+
+            {errorMsg && (
+              <div className="flex items-center gap-2 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-200">
+                <XCircle size={16} />
+                {errorMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={state === "submitting"}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-gold-gradient px-8 py-3.5 font-sans text-sm font-semibold uppercase tracking-widest text-ruby-dark transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
+            >
+              {state === "submitting" ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" /> Submitting...
+                </>
+              ) : (
+                "Send RSVP"
+              )}
+            </button>
+          </motion.form>
+        )}
+      </div>
+    </section>
+  );
+}
