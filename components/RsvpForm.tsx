@@ -11,7 +11,8 @@ export default function RsvpForm() {
   const [fullName, setFullName] = useState("");
   const [attendance, setAttendance] = useState<AttendanceStatus>("attending");
   const [guestCount, setGuestCount] = useState(1);
-  const [contact, setContact] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -34,7 +35,8 @@ export default function RsvpForm() {
     setFullName("");
     setAttendance("attending");
     setGuestCount(1);
-    setContact("");
+    setEmail("");
+    setPhone("");
     setMessage("");
     setPhoto(null);
     setPhotoPreview(null);
@@ -42,8 +44,13 @@ export default function RsvpForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !contact.trim()) {
-      setErrorMsg("Please fill in your name and a way to reach you.");
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!fullName.trim() || !email.trim()) {
+      setErrorMsg("Please fill in your name and email address.");
+      return;
+    }
+    if (!emailPattern.test(email.trim())) {
+      setErrorMsg("Please enter a valid email address.");
       return;
     }
     setState("submitting");
@@ -54,7 +61,8 @@ export default function RsvpForm() {
       formData.append("full_name", fullName.trim());
       formData.append("attendance_status", attendance);
       formData.append("guest_count", String(guestCount));
-      formData.append("contact", contact.trim());
+      formData.append("email", email.trim());
+      formData.append("phone", phone.trim());
       formData.append("message", message.trim());
       if (attendance === "attending" && photo) {
         formData.append("photo", photo);
@@ -109,8 +117,8 @@ export default function RsvpForm() {
             <CheckCircle2 size={48} className="text-gold" />
             <h3 className="font-serif text-2xl text-ivory">Thank You!</h3>
             <p className="font-sans text-sm text-ivory/80">
-              Your RSVP has been received. We can&apos;t wait to celebrate with
-              you.
+              Your RSVP has been received. A confirmation with the wedding
+              details is on its way to your email.
             </p>
             <button
               onClick={() => setState("idle")}
@@ -187,15 +195,31 @@ export default function RsvpForm() {
 
             <div>
               <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
-                Mobile Number / Email
+                Email Address
               </label>
               <input
-                type="text"
+                type="email"
                 required
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
-                placeholder="07X XXX XXXX or you@example.com"
+                placeholder="you@example.com"
+              />
+              <p className="mt-1 font-sans text-xs text-ivory/60">
+                We&apos;ll send your RSVP confirmation and wedding details here.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
+                placeholder="07X XXX XXXX"
               />
             </div>
 

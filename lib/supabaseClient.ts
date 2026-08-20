@@ -27,7 +27,8 @@ export interface RsvpRecord {
   full_name: string;
   attendance_status: AttendanceStatus;
   guest_count: number;
-  contact: string;
+  email: string;
+  phone: string | null;
   message: string | null;
   photo_url: string | null;
 }

@@ -16,21 +16,6 @@ const RESEND_FROM_ADDRESS =
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Wedding details shown in the guest confirmation email — edit here if
-// any detail changes, this is the single place it's defined.
-const WEDDING_DETAILS = {
-  coupleNames: "Umini & Randeera",
-  dateLabel: "Thursday, 22nd October 2026",
-  ceremonyTime: "9.15 A.M. (Poruwa Ceremony)",
-  venueName: "Monarch Imperial",
-  venueAddress: "Sri Jayawardenepura Kotte, Sri Lanka",
-  mapsUrl:
-    "https://www.google.com/maps/dir/?api=1&destination=" +
-    encodeURIComponent("Monarch Imperial, Sri Jayawardenepura Kotte, Sri Lanka"),
-  rsvpDeadline: "10th October 2026",
-};
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,21 +24,14 @@ export async function POST(req: NextRequest) {
     const fullName = String(formData.get("full_name") || "").trim();
     const attendanceStatus = String(formData.get("attendance_status") || "").trim();
     const guestCountRaw = String(formData.get("guest_count") || "1");
-    const email = String(formData.get("email") || "").trim();
-    const phone = String(formData.get("phone") || "").trim();
+    const contact = String(formData.get("contact") || "").trim();
     const message = String(formData.get("message") || "").trim();
     const photo = formData.get("photo") as File | null;
 
     // --- Validation ---
-    if (!fullName || !email) {
+    if (!fullName || !contact) {
       return NextResponse.json(
-        { error: "Full name and email address are required." },
-        { status: 400 }
-      );
-    }
-    if (!EMAIL_PATTERN.test(email)) {
-      return NextResponse.json(
-        { error: "Please provide a valid email address." },
+        { error: "Full name and contact information are required." },
         { status: 400 }
       );
     }
@@ -117,8 +95,7 @@ export async function POST(req: NextRequest) {
         full_name: fullName,
         attendance_status: attendanceStatus,
         guest_count: attendanceStatus === "attending" ? guestCount : 0,
-        email,
-        phone: phone || null,
+        contact,
         message: message || null,
         photo_url: photoUrl,
       })
@@ -153,11 +130,8 @@ export async function POST(req: NextRequest) {
                   attendanceStatus === "attending" ? "Attending" : "Regretfully Declining"
                 }</td></tr>
                 <tr><td style="padding:6px 0; color:#666;">Guests</td><td style="padding:6px 0;">${guestCount}</td></tr>
-                <tr><td style="padding:6px 0; color:#666;">Email</td><td style="padding:6px 0;">${escapeHtml(
-                  email
-                )}</td></tr>
-                <tr><td style="padding:6px 0; color:#666;">Phone</td><td style="padding:6px 0;">${escapeHtml(
-                  phone || "—"
+                <tr><td style="padding:6px 0; color:#666;">Contact</td><td style="padding:6px 0;">${escapeHtml(
+                  contact
                 )}</td></tr>
                 <tr><td style="padding:6px 0; color:#666;">Message</td><td style="padding:6px 0;">${escapeHtml(
                   message || "—"
@@ -175,72 +149,7 @@ export async function POST(req: NextRequest) {
     } catch (emailError) {
       // We deliberately do not fail the whole request if only the email fails —
       // the RSVP is already safely stored in Supabase.
-      console.error("Resend email error (couple notification):", emailError);
-    }
-
-    // --- Confirmation email to the guest, with wedding details & location ---
-    try {
-      if (process.env.RESEND_API_KEY) {
-        const isAttending = attendanceStatus === "attending";
-        await resend.emails.send({
-          from: RESEND_FROM_ADDRESS,
-          to: email,
-          subject: isAttending
-            ? `You're Invited: ${WEDDING_DETAILS.coupleNames}'s Wedding — ${WEDDING_DETAILS.dateLabel}`
-            : `Thank You For Your RSVP — ${WEDDING_DETAILS.coupleNames}`,
-          html: `
-            <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; color:#2B1010;">
-              <h2 style="color:#8B0000; margin-bottom:4px;">${escapeHtml(
-                WEDDING_DETAILS.coupleNames
-              )}</h2>
-              <p style="color:#800020; font-style:italic; margin-top:0;">are getting married</p>
-
-              <p style="font-size:15px; line-height:1.6;">
-                Dear <strong>${escapeHtml(fullName)}</strong>,<br/><br/>
-                ${
-                  isAttending
-                    ? "Thank you for confirming you'll be joining us! Here are the wedding details:"
-                    : "Thank you for letting us know. We'll miss you, but here are the details in case your plans change:"
-                }
-              </p>
-
-              <table style="width:100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
-                <tr><td style="padding:6px 0; color:#666; width:120px;">Date</td><td style="padding:6px 0;"><strong>${
-                  WEDDING_DETAILS.dateLabel
-                }</strong></td></tr>
-                <tr><td style="padding:6px 0; color:#666;">Ceremony</td><td style="padding:6px 0;">${
-                  WEDDING_DETAILS.ceremonyTime
-                }</td></tr>
-                <tr><td style="padding:6px 0; color:#666;">Venue</td><td style="padding:6px 0;"><strong>${
-                  WEDDING_DETAILS.venueName
-                }</strong></td></tr>
-                <tr><td style="padding:6px 0; color:#666;">Location</td><td style="padding:6px 0;">${
-                  WEDDING_DETAILS.venueAddress
-                }</td></tr>
-              </table>
-
-              <p style="margin: 20px 0;">
-                <a href="${WEDDING_DETAILS.mapsUrl}"
-                   style="background:#8B0000; color:#D4AF37; padding:10px 22px; border-radius:24px; text-decoration:none; font-size:13px; letter-spacing:1px; text-transform:uppercase;">
-                  Get Directions
-                </a>
-              </p>
-
-              <p style="font-size:13px; color:#888;">
-                Please let us know of any changes before ${WEDDING_DETAILS.rsvpDeadline}.
-              </p>
-
-              <p style="margin-top:24px; font-style:italic; color:#8B0000;">
-                With love,<br/>${escapeHtml(WEDDING_DETAILS.coupleNames)}
-              </p>
-            </div>
-          `,
-        });
-      }
-    } catch (guestEmailError) {
-      // Same best-effort handling — a failed guest confirmation email should
-      // never block the RSVP from being saved.
-      console.error("Resend email error (guest confirmation):", guestEmailError);
+      console.error("Resend email error:", emailError);
     }
 
     return NextResponse.json({ success: true, rsvp: inserted }, { status: 201 });

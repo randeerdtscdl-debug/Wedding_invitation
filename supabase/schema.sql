@@ -11,7 +11,8 @@ create table if not exists public.rsvps (
   full_name text not null,
   attendance_status text not null check (attendance_status in ('attending', 'declining')),
   guest_count integer not null default 1 check (guest_count >= 0 and guest_count <= 10),
-  contact text not null,
+  email text not null,
+  phone text,
   message text,
   photo_url text
 );
