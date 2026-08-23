@@ -54,10 +54,17 @@ export default function GallerySection() {
           {GALLERY_IMAGES.map((src, idx) => (
             <motion.button
               key={src}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 40, scale: 0.9, rotate: idx % 2 === 0 ? -2 : 2 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
               viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.5, delay: (idx % 3) * 0.1 }}
+              transition={{
+                type: "spring",
+                stiffness: 110,
+                damping: 16,
+                delay: (idx % 3) * 0.12,
+              }}
+              whileHover={{ y: -8, scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => setActiveIndex(idx)}
               className="group relative aspect-[3/4] overflow-hidden rounded-xl card-shadow"
             >
@@ -66,9 +73,16 @@ export default function GallerySection() {
                 alt={`Umini & Randeera pre-wedding photo ${idx + 1}`}
                 fill
                 sizes="(max-width: 640px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.15]"
               />
-              <div className="absolute inset-0 bg-ruby-dark/0 transition-colors duration-300 group-hover:bg-ruby-dark/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ruby-dark/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-gold/0 transition-all duration-300 group-hover:ring-gold/60" />
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-ivory/90 px-3 py-1 font-sans text-[10px] uppercase tracking-widest text-ruby opacity-0 shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:opacity-100"
+              >
+                View
+              </motion.span>
             </motion.button>
           ))}
         </div>
@@ -102,9 +116,10 @@ export default function GallerySection() {
             </button>
             <motion.div
               key={activeIndex}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 200, damping: 22 }}
               onClick={(e) => e.stopPropagation()}
               className="relative h-[70vh] w-full max-w-3xl"
             >

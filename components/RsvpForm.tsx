@@ -2,7 +2,17 @@
 
 import { useState, FormEvent, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { Loader2, CheckCircle2, XCircle, ImagePlus } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ImagePlus,
+  User,
+  Mail,
+  Phone as PhoneIcon,
+  MessageSquareHeart,
+  Download,
+} from "lucide-react";
 import type { AttendanceStatus } from "@/lib/supabaseClient";
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
@@ -18,6 +28,7 @@ export default function RsvpForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [submittedName, setSubmittedName] = useState("");
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,6 +90,7 @@ export default function RsvpForm() {
         throw new Error(data?.error || "Something went wrong. Please try again.");
       }
 
+      setSubmittedName(fullName.trim());
       setState("success");
       resetForm();
     } catch (err) {
@@ -112,6 +124,7 @@ export default function RsvpForm() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 160, damping: 18 }}
             className="mt-12 flex flex-col items-center gap-4 rounded-2xl bg-ivory/10 p-10 text-center backdrop-blur"
           >
             <CheckCircle2 size={48} className="text-gold" />
@@ -120,6 +133,17 @@ export default function RsvpForm() {
               Your RSVP has been received. A confirmation with the wedding
               details is on its way to your email.
             </p>
+
+            {submittedName && (
+              <a
+                href={`/api/invitation?name=${encodeURIComponent(submittedName)}`}
+                download
+                className="mt-2 flex items-center gap-2 rounded-full bg-gold-gradient px-7 py-3 text-sm font-semibold uppercase tracking-widest text-ruby-dark shadow-lg transition-transform hover:scale-105"
+              >
+                <Download size={18} /> Download Your Invitation
+              </a>
+            )}
+
             <button
               onClick={() => setState("idle")}
               className="mt-2 rounded-full border border-gold px-6 py-2 text-sm text-gold hover:bg-gold hover:text-ruby-dark transition-colors"
@@ -134,24 +158,30 @@ export default function RsvpForm() {
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.8 }}
             onSubmit={handleSubmit}
-            className="mt-12 space-y-5 rounded-2xl bg-ivory/10 p-6 backdrop-blur sm:p-10"
+            className="mt-12 space-y-6 rounded-3xl border border-gold/20 bg-ivory/10 p-6 shadow-2xl backdrop-blur-xl sm:p-10"
           >
             <div>
-              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+              <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                 Full Name
               </label>
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
-                placeholder="Your full name"
-              />
+              <div className="relative">
+                <User
+                  size={17}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ruby/50"
+                />
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full rounded-xl border border-gold/30 bg-ivory/95 py-3 pl-11 pr-4 font-sans text-sm text-[#2B1010] shadow-sm outline-none transition-all focus:border-gold focus:ring-2 focus:ring-gold/30"
+                  placeholder="Your full name"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+              <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                 Will You Be Attending?
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -165,9 +195,9 @@ export default function RsvpForm() {
                     type="button"
                     key={opt.value}
                     onClick={() => setAttendance(opt.value)}
-                    className={`rounded-lg border px-4 py-3 font-sans text-sm transition-colors ${
+                    className={`rounded-xl border px-4 py-3 font-sans text-sm transition-all ${
                       attendance === opt.value
-                        ? "border-gold bg-gold text-ruby-dark font-medium"
+                        ? "border-gold bg-gold-gradient font-semibold text-ruby-dark shadow-md scale-[1.02]"
                         : "border-gold/30 bg-ivory/10 text-ivory hover:bg-ivory/20"
                     }`}
                   >
@@ -179,7 +209,7 @@ export default function RsvpForm() {
 
             {attendance === "attending" && (
               <div>
-                <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                   Number of Guests Attending
                 </label>
                 <input
@@ -188,60 +218,78 @@ export default function RsvpForm() {
                   max={10}
                   value={guestCount}
                   onChange={(e) => setGuestCount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
+                  className="w-full rounded-xl border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] shadow-sm outline-none transition-all focus:border-gold focus:ring-2 focus:ring-gold/30"
                 />
               </div>
             )}
 
             <div>
-              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+              <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                 Email Address
               </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
-                placeholder="you@example.com"
-              />
-              <p className="mt-1 font-sans text-xs text-ivory/60">
+              <div className="relative">
+                <Mail
+                  size={17}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ruby/50"
+                />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-gold/30 bg-ivory/95 py-3 pl-11 pr-4 font-sans text-sm text-[#2B1010] shadow-sm outline-none transition-all focus:border-gold focus:ring-2 focus:ring-gold/30"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <p className="mt-1.5 font-sans text-xs text-ivory/60">
                 We&apos;ll send your RSVP confirmation and wedding details here.
               </p>
             </div>
 
             <div>
-              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+              <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                 Mobile Number
               </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
-                placeholder="07X XXX XXXX"
-              />
+              <div className="relative">
+                <PhoneIcon
+                  size={17}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ruby/50"
+                />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-xl border border-gold/30 bg-ivory/95 py-3 pl-11 pr-4 font-sans text-sm text-[#2B1010] shadow-sm outline-none transition-all focus:border-gold focus:ring-2 focus:ring-gold/30"
+                  placeholder="07X XXX XXXX"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+              <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                 Message / Wishes For The Couple
               </label>
-              <textarea
-                rows={3}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full resize-none rounded-lg border border-gold/30 bg-ivory/95 px-4 py-3 font-sans text-sm text-[#2B1010] outline-none focus:border-gold"
-                placeholder="Share your wishes..."
-              />
+              <div className="relative">
+                <MessageSquareHeart
+                  size={17}
+                  className="pointer-events-none absolute left-4 top-3.5 text-ruby/50"
+                />
+                <textarea
+                  rows={3}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full resize-none rounded-xl border border-gold/30 bg-ivory/95 py-3 pl-11 pr-4 font-sans text-sm text-[#2B1010] shadow-sm outline-none transition-all focus:border-gold focus:ring-2 focus:ring-gold/30"
+                  placeholder="Share your wishes..."
+                />
+              </div>
             </div>
 
             {attendance === "attending" && (
               <div>
-                <label className="mb-1.5 block font-sans text-xs uppercase tracking-widest text-gold">
+                <label className="mb-1.5 block font-sans text-xs font-semibold uppercase tracking-widest text-gold">
                   Upload Your Photo
                 </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-gold/40 bg-ivory/5 px-4 py-4 text-ivory/80 hover:bg-ivory/10">
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-gold/40 bg-ivory/5 px-4 py-4 text-ivory/80 transition-colors hover:border-gold hover:bg-ivory/10">
                   <ImagePlus size={20} className="text-gold" />
                   <span className="font-sans text-sm">
                     {photo ? photo.name : "Choose an image (max 5MB)"}
@@ -258,14 +306,14 @@ export default function RsvpForm() {
                   <img
                     src={photoPreview}
                     alt="Preview"
-                    className="mt-3 h-28 w-28 rounded-lg object-cover ring-2 ring-gold/40"
+                    className="mt-3 h-28 w-28 rounded-xl object-cover shadow-md ring-2 ring-gold/40"
                   />
                 )}
               </div>
             )}
 
             {errorMsg && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-200">
+              <div className="flex items-center gap-2 rounded-xl bg-red-900/30 px-4 py-3 text-sm text-red-200">
                 <XCircle size={16} />
                 {errorMsg}
               </div>

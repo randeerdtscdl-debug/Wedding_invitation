@@ -55,9 +55,10 @@ export default function DetailsSection() {
             </p>
             <a
               href="tel:+94719092469"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-ruby-gradient px-6 py-2.5 text-sm text-ivory transition-transform hover:scale-105"
+              aria-label="Call the Bride"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-ruby-gradient px-7 py-2.5 text-sm font-medium tracking-wide text-ivory shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95"
             >
-              <Phone size={16} /> +94 71 909 2469
+              <Phone size={16} /> Contact Bride
             </a>
           </motion.div>
 
@@ -86,9 +87,10 @@ export default function DetailsSection() {
             </p>
             <a
               href="tel:+94713670967"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-ruby-gradient px-6 py-2.5 text-sm text-ivory transition-transform hover:scale-105"
+              aria-label="Call the Groom"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-ruby-gradient px-7 py-2.5 text-sm font-medium tracking-wide text-ivory shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95"
             >
-              <Phone size={16} /> +94 71 367 0967
+              <Phone size={16} /> Contact Groom
             </a>
           </motion.div>
         </div>

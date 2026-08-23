@@ -97,28 +97,37 @@ export default function GuestWall() {
             Be the first to RSVP and appear here!
           </p>
         ) : (
-          <div className="mt-14 grid grid-cols-2 gap-5 sm:grid-cols-4">
+          <div className="mt-14 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
             {guests.map((guest, idx) => (
               <motion.div
                 key={guest.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 24, scale: 0.92 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.5, delay: (idx % 4) * 0.1 }}
-                className="flex flex-col items-center gap-2 rounded-xl bg-ivory p-4 card-shadow"
+                transition={{
+                  type: "spring",
+                  stiffness: 120,
+                  damping: 15,
+                  delay: (idx % 4) * 0.08,
+                }}
+                whileHover={{ y: -5 }}
+                className="group flex flex-col items-center gap-3 rounded-2xl bg-ivory p-5 card-shadow transition-shadow duration-300 hover:shadow-xl"
               >
-                <div className="relative h-20 w-20 overflow-hidden rounded-full ring-2 ring-gold/50">
+                {/* Fixed-size square frame — every guest photo, whatever its
+                    original dimensions, is cropped to fill this frame so the
+                    grid always stays perfectly aligned. */}
+                <div className="relative aspect-square w-full max-w-[120px] overflow-hidden rounded-full ring-4 ring-gold/40 transition-all duration-300 group-hover:ring-gold">
                   {guest.photo_url ? (
                     <Image
                       src={guest.photo_url}
                       alt={guest.full_name}
                       fill
-                      sizes="80px"
-                      className="object-cover"
+                      sizes="120px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-ruby-gradient text-gold">
-                      <Users size={24} />
+                      <Users size={28} />
                     </div>
                   )}
                 </div>
