@@ -26,6 +26,7 @@ const config: Config = {
         serif: ["var(--font-playfair)", "Georgia", "serif"],
         display: ["var(--font-cormorant)", "Georgia", "serif"],
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sinhala: ["var(--font-sinhala)", "sans-serif"],
       },
       backgroundImage: {
         "ruby-gradient": "linear-gradient(135deg, #8B0000 0%, #800020 100%)",

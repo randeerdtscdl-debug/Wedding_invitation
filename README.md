@@ -3,7 +3,7 @@
 A luxurious, interactive Next.js 14 (App Router) wedding website with an
 intro music/video gate, countdown timer, Poruwa ceremony details, photo
 gallery, an RSVP form with photo upload, and a live "Attending Guests"
-photo wall — backed by Supabase and Resend.
+photo wall — backed by Supabase and Gmail.
 
 ---
 
@@ -69,18 +69,26 @@ npm install
    - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (keep this secret —
      never put it behind `NEXT_PUBLIC_`)
 
-### Step 3 — Set up Resend (email notifications)
-1. Sign up at [resend.com](https://resend.com) → **API Keys** → create a
-   key → this is your `RESEND_API_KEY`.
-2. Under **Domains**, add and verify the domain you want to send from
-   (e.g. `yourdomain.com`). Until a domain is verified, Resend only lets
-   you send to your own account email — fine for testing, but you'll want
-   a verified domain before the real wedding invites go out.
-3. Set `RESEND_FROM_ADDRESS` to something like
-   `RSVP <rsvp@yourdomain.com>` on that verified domain.
+### Step 3 — Set up Gmail (email notifications, free & instant)
+No custom domain needed — this sends email straight from your own Gmail
+account, and works immediately to *any* guest's email address (unlike a
+fresh Resend account, which only lets you email yourself until you verify
+a domain).
+
+1. Turn on **2-Step Verification** on the Gmail account you want to send
+   from: [myaccount.google.com/signinoptions/two-step-verification](https://myaccount.google.com/signinoptions/two-step-verification)
+   (App Passwords only work once this is on.)
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords),
+   choose **Mail** as the app, give it a name like "Wedding Website", and
+   click **Generate**. Google shows you a 16-character password —
+   copy it (spaces don't matter, they're ignored).
+3. Set `GMAIL_USER` to that Gmail address, and `GMAIL_APP_PASSWORD` to
+   the 16-character code (**not** your normal Gmail password).
 4. Set `COUPLE_NOTIFICATION_EMAIL` to the inbox that should receive every
-   RSVP (this can be Umini's or Randeera's personal email, or a shared
-   one).
+   RSVP (this can be the same Gmail address, or a different one).
+
+Gmail's free sending limit is 500 emails/day — more than enough for any
+wedding guest list.
 
 ### Step 4 — Environment variables
 ```bash
@@ -115,7 +123,7 @@ Open [http://localhost:3000](http://localhost:3000).
    - Uploads the photo to the `guest-photos` Storage bucket (only when
      `attendance_status === "attending"` and a file was provided)
    - Inserts the RSVP row into the `rsvps` table
-   - Sends a notification email to `COUPLE_NOTIFICATION_EMAIL` via Resend
+   - Sends a notification email to `COUPLE_NOTIFICATION_EMAIL` via Gmail
      (this step is best-effort — if email sending fails, the RSVP itself
      is still saved)
 4. `GuestWall.tsx` subscribes to Supabase Realtime on the `rsvps` table
@@ -136,8 +144,8 @@ Open [http://localhost:3000](http://localhost:3000).
    **Settings → Environment Variables**).
 4. Click **Deploy**. Vercel auto-detects Next.js — no config needed.
 5. Once deployed, add your production domain (if you have one) under
-   **Settings → Domains**, and re-verify that domain with Resend if it's
-   different from the one used for `RESEND_FROM_ADDRESS`.
+   **Settings → Domains**. No changes needed on the Gmail side — the
+   App Password keeps working from any server.
 
 ---
 
