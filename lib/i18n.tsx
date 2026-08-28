@@ -11,12 +11,154 @@ import {
 export type Language = "en" | "si";
 
 /**
+ * Explicit shape for every translation key. Defining this up front (rather
+ * than inferring it from `as const` on the English object) keeps the
+ * English and Sinhala dictionaries structurally interchangeable — with
+ * `as const`, TypeScript locks in each literal string, so `si.languageToggle.label`
+ * ("සිංහල") is a different *type* than `en.languageToggle.label` ("English"),
+ * and the two objects stop being assignable to one another once the
+ * dictionary gets deep enough. Typing both against this interface (plain
+ * `string` leaves) avoids that entirely.
+ */
+interface TimelineEvent {
+  title: string;
+  description: string;
+}
+
+interface GoodToKnowItem {
+  title: string;
+  description: string;
+}
+
+export interface Translations {
+  languageToggle: { label: string; aria: string };
+  intro: {
+    weddingOf: string;
+    gettingMarried: string;
+    openInvitation: string;
+    skipIntro: string;
+  };
+  hero: {
+    togetherWithFamilies: string;
+    gettingMarried: string;
+    dayLabel: string;
+    dateVenueSeparator: string;
+    scroll: string;
+  };
+  countdown: {
+    days: string;
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
+  details: {
+    withGreatJoy: string;
+    heading: string;
+    bride: string;
+    groom: string;
+    belovedDaughterOf: string;
+    belovedSonOf: string;
+    contactBride: string;
+    contactGroom: string;
+    poruwaCeremony: string;
+    commencesAt: string;
+    poruwaDescSuffix: string;
+    rsvpBy: string;
+  };
+  timeline: {
+    bigDay: string;
+    heading: string;
+    events: TimelineEvent[];
+  };
+  venue: {
+    joinUsAt: string;
+    location: string;
+    getDirections: string;
+  };
+  gallery: {
+    ourStory: string;
+    heading: string;
+    view: string;
+  };
+  rsvp: {
+    kindlyRespond: string;
+    heading: string;
+    respondBy: string;
+    thankYou: string;
+    received: string;
+    downloadInvitation: string;
+    submitAnother: string;
+    fullName: string;
+    fullNamePlaceholder: string;
+    willAttend: string;
+    attending: string;
+    declining: string;
+    guestCount: string;
+    email: string;
+    emailPlaceholder: string;
+    emailNote: string;
+    phone: string;
+    phonePlaceholder: string;
+    message: string;
+    messagePlaceholder: string;
+    uploadPhoto: string;
+    choosePhoto: string;
+    photoRequiredNote: string;
+    errorNameEmail: string;
+    errorEmailInvalid: string;
+    errorPhotoSize: string;
+    errorRequiredFields: string;
+    errorPhotoRequired: string;
+    submitting: string;
+    send: string;
+  };
+  guestWall: {
+    joining: string;
+    heading: string;
+    loading: string;
+    empty: string;
+  };
+  memories: {
+    label: string;
+    heading: string;
+    subheading: string;
+    relatedTo: string;
+    couple: string;
+    bride: string;
+    groom: string;
+    comment: string;
+    commentPlaceholder: string;
+    uploadPhoto: string;
+    choosePhoto: string;
+    submit: string;
+    submitting: string;
+    thankYou: string;
+    received: string;
+    addAnother: string;
+    errorRequired: string;
+    errorPhotoSize: string;
+    wallLabel: string;
+    wallHeading: string;
+    wallEmpty: string;
+    wallLoading: string;
+  };
+  goodToKnow: {
+    label: string;
+    heading: string;
+    items: GoodToKnowItem[];
+  };
+  footer: {
+    dateMadeWithLove: string;
+  };
+}
+
+/**
  * All translatable copy lives here. Proper nouns — the couple's names,
  * parents' names, the venue name, phone numbers — are intentionally left
  * out of this dictionary and hard-coded in the components, since they
  * should never be translated.
  */
-export const translations = {
+export const translations: Record<Language, Translations> = {
   en: {
     languageToggle: { label: "සිංහල", aria: "Switch to Sinhala" },
     intro: {
@@ -381,9 +523,7 @@ export const translations = {
       dateMadeWithLove: "2026 ඔක්තෝබර් 22 · ආදරයෙන් සකසන ලදී",
     },
   },
-} as const;
-
-export type Translations = typeof translations.en;
+};
 
 interface LanguageContextValue {
   language: Language;
