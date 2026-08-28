@@ -25,8 +25,10 @@ umini-randeera-wedding/
 │   ├── PoruwaTimeline.tsx
 │   ├── MapSection.tsx
 │   ├── GallerySection.tsx
+│   ├── GoodToKnowSection.tsx
 │   ├── RsvpForm.tsx
-│   └── GuestWall.tsx
+│   ├── GuestWall.tsx
+│   └── MemoriesWall.tsx
 ├── lib/
 │   ├── supabaseClient.ts    # Browser client (anon key)
 │   └── supabaseAdmin.ts     # Server-only client (service role key)
@@ -60,9 +62,20 @@ npm install
 2. Once it's provisioned, open **SQL Editor** and paste the entire contents
    of `supabase/schema.sql`, then **Run**. This creates:
    - The `rsvps` table with a `check` constraint on `attendance_status`
+     (`full_name`, `email`, `phone` are all required — every RSVP needs a
+     name, email, and phone number)
+   - The `memories` table for the "Add Your Memories" wall (photo +
+     comment + who it's with — couple / bride / groom)
    - Row Level Security policies (public insert, public read of attending
-     guests only)
-   - The `guest-photos` public Storage bucket with a public-read policy
+     guests only for `rsvps`; fully public read for `memories`, since
+     that wall is meant to be seen by every guest)
+   - The `guest-photos` and `memory-photos` public Storage buckets, each
+     with a public-read policy
+
+   **Already have this project deployed?** Instead of re-running the full
+   `schema.sql`, run `supabase/migration-memories-and-required-phone.sql`
+   — it adds the `memories` table/bucket and makes `phone` required
+   without touching your existing RSVP data.
 3. Go to **Project Settings → API** and copy:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -98,12 +111,18 @@ Fill in all six values from Steps 2–3.
 
 ### Step 5 — Add your media
 Drop your files into:
-- `public/video/intro-cinematic.mp4` — short cinematic intro clip
-- `public/video/hero-loop.mp4` — looping hero background video
+- `public/video/intro-cinematic.mp4` — short cinematic clip that plays after
+  the guest taps "Click to Open Invitation"
+- `public/video/hero-loop1.mp4` — looping background video for the very
+  first gate screen (auto-plays muted the instant the site loads)
+- `public/video/hero-loop.mp4` — looping hero section background video
+- `public/video/intro-cinematicww.mp4` — looping background video for the
+  "Good To Know" section only
 - `public/images/hero-poster.jpg` — fallback poster image for the hero video
 - `public/audio/wedding-theme.mp3` — background music track
-- `public/images/gallery/photo-1.jpg` … `photo-6.jpg` — pre-wedding shoot
-  photos (add more and extend the array in `GallerySection.tsx` if needed)
+- `public/images/gallery/photo-1.jpg` … `photo-17.jpg` — pre-wedding shoot
+  photos, shown both in the auto-playing hero slider and the click-to-expand
+  grid (add more and extend `GALLERY_IMAGES` in `GallerySection.tsx` if needed)
 
 ### Step 6 — Run locally
 ```bash
@@ -131,6 +150,15 @@ Open [http://localhost:3000](http://localhost:3000).
    `photo_url` for rows where `attendance_status = 'attending'` — phone
    numbers, emails, guest counts, and messages are never fetched into
    that component, so they can't leak onto the public wall.
+5. Right after a successful RSVP, an inline "Add Your Memories" form
+   appears — guests can share a photo + a short message about the couple,
+   bride, or groom. This posts to `app/api/memories/route.ts`, which
+   uploads the photo to the `memory-photos` bucket and inserts a row into
+   `memories`.
+6. `MemoriesWall.tsx` subscribes to Supabase Realtime on the `memories`
+   table and shows every submission as an auto-advancing slider — new
+   memories slide in live, without a page refresh, for every guest
+   currently viewing the site.
 
 ---
 

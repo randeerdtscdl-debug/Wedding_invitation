@@ -75,6 +75,14 @@ export const translations = {
           title: "Music & Celebration",
           description: "Dancing the afternoon away",
         },
+        {
+          title: "Blessings & Photography",
+          description: "Family blessings & cherished moments",
+        },
+        {
+          title: "Couple's Grand Exit",
+          description: "The newlyweds make their special exit",
+        },
       ],
     },
     venue: {
@@ -111,9 +119,13 @@ export const translations = {
       messagePlaceholder: "Share your wishes...",
       uploadPhoto: "Upload Your Photo",
       choosePhoto: "Choose an image (max 5MB)",
+      photoRequiredNote: "A photo is required with your RSVP.",
       errorNameEmail: "Please fill in your name and email address.",
       errorEmailInvalid: "Please enter a valid email address.",
       errorPhotoSize: "Photo must be smaller than 5MB.",
+      errorRequiredFields:
+        "Please fill in your name, email, phone number, and upload a photo.",
+      errorPhotoRequired: "Please upload a photo to complete your RSVP.",
       submitting: "Submitting...",
       send: "Send RSVP",
     },
@@ -123,6 +135,31 @@ export const translations = {
       loading: "Loading well-wishers...",
       empty: "Be the first to RSVP and appear here!",
     },
+    memories: {
+      label: "Share A Moment",
+      heading: "Add Your Memories",
+      subheading:
+        "Share a photo with the couple and a few words — it'll appear on our Memories wall for everyone to see.",
+      relatedTo: "This Memory Is With",
+      couple: "The Couple",
+      bride: "The Bride",
+      groom: "The Groom",
+      comment: "Your Message",
+      commentPlaceholder: "Tell us about this moment...",
+      uploadPhoto: "Upload A Photo",
+      choosePhoto: "Choose an image (max 5MB)",
+      submit: "Share Memory",
+      submitting: "Sharing...",
+      thankYou: "Memory Shared!",
+      received: "Thank you for sharing — it now lives on our Memories wall.",
+      addAnother: "Share Another Memory",
+      errorRequired: "Please add a photo and a short message.",
+      errorPhotoSize: "Photo must be smaller than 5MB.",
+      wallLabel: "From Our Loved Ones",
+      wallHeading: "Memories Wall",
+      wallEmpty: "Be the first to share a memory — add yours in the RSVP form above!",
+      wallLoading: "Loading memories...",
+    },
     goodToKnow: {
       label: "A Few Notes",
       heading: "Good To Know",
@@ -130,7 +167,7 @@ export const translations = {
         {
           title: "Dress Code",
           description:
-            "Formal / traditional attire. We kindly ask guests to avoid wearing red or white, colours reserved for the bride.",
+            "No specific dress code — come as you are! If you'd like to match our wedding colour, we'd love to see you in shades of Ruby Red.",
         },
         {
           title: "Parking",
@@ -219,6 +256,14 @@ export const translations = {
           title: "සංගීතය සහ සැමරුම",
           description: "සවස වන තෙක් නර්තනයෙන් සැමරීම",
         },
+        {
+          title: "ආශිර්වාද සහ ඡායාරූප",
+          description: "පවුලේ ආශිර්වාද සහ අගනා මොහොත්",
+        },
+        {
+          title: "යුවළගේ විශේෂ පිටවීම",
+          description: "අලුත උපත් යුවළ ඔවුන්ගේ විශේෂ පිටවීම සිදු කරති",
+        },
       ],
     },
     venue: {
@@ -255,9 +300,13 @@ export const translations = {
       messagePlaceholder: "ඔබගේ සුබ පැතුම් ලියන්න...",
       uploadPhoto: "ඔබගේ ඡායාරූපය උඩුගත කරන්න",
       choosePhoto: "රූපයක් තෝරන්න (උපරිම 5MB)",
+      photoRequiredNote: "ඔබගේ RSVP සමඟ ඡායාරූපයක් අනිවාර්යයෙන් අවශ්‍යයි.",
       errorNameEmail: "කරුණාකර ඔබගේ නම සහ විද්‍යුත් තැපැල් ලිපිනය පුරවන්න.",
       errorEmailInvalid: "කරුණාකර වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
       errorPhotoSize: "ඡායාරූපය 5MB ට වඩා කුඩා විය යුතුය.",
+      errorRequiredFields:
+        "කරුණාකර ඔබගේ නම, විද්‍යුත් තැපැල් ලිපිනය, දුරකථන අංකය පුරවා ඡායාරූපයක් උඩුගත කරන්න.",
+      errorPhotoRequired: "කරුණාකර ඔබගේ RSVP සම්පූර්ණ කිරීමට ඡායාරූපයක් උඩුගත කරන්න.",
       submitting: "යොමු කරමින්...",
       send: "RSVP යවන්න",
     },
@@ -267,6 +316,31 @@ export const translations = {
       loading: "පූරණය වෙමින්...",
       empty: "පළමුව RSVP කර මෙහි දිස්වන්න!",
     },
+    memories: {
+      label: "මොහොතක් බෙදාගන්න",
+      heading: "ඔබගේ මතක එක් කරන්න",
+      subheading:
+        "යුවළ සමඟ ඡායාරූපයක් සහ වචන කිහිපයක් බෙදාගන්න — එය අපගේ මතක බිත්තියේ සියල්ලන්ටම පෙනෙන පරිදි දිස්වනු ඇත.",
+      relatedTo: "මෙම මතකය සම්බන්ධ වන්නේ",
+      couple: "යුවළ සමඟ",
+      bride: "මනාලිය සමඟ",
+      groom: "මනාලයා සමඟ",
+      comment: "ඔබගේ පණිවිඩය",
+      commentPlaceholder: "මෙම මොහොත ගැන අපට කියන්න...",
+      uploadPhoto: "ඡායාරූපයක් උඩුගත කරන්න",
+      choosePhoto: "රූපයක් තෝරන්න (උපරිම 5MB)",
+      submit: "මතකය බෙදාගන්න",
+      submitting: "යොමු කරමින්...",
+      thankYou: "මතකය බෙදාගන්නා ලදී!",
+      received: "බෙදාගැනීම ගැන ස්තූතියි — එය දැන් අපගේ මතක බිත්තියේ ඇත.",
+      addAnother: "තවත් මතකයක් බෙදාගන්න",
+      errorRequired: "කරුණාකර ඡායාරූපයක් සහ කෙටි පණිවිඩයක් එක් කරන්න.",
+      errorPhotoSize: "ඡායාරූපය 5MB ට වඩා කුඩා විය යුතුය.",
+      wallLabel: "අපගේ ආදරණීයන්ගෙන්",
+      wallHeading: "මතක බිත්තිය",
+      wallEmpty: "පළමු මතකය බෙදාගන්නා තැනැත්තා ඔබ වන්න — ඉහත RSVP පෝරමයෙන් එක් කරන්න!",
+      wallLoading: "මතක පූරණය වෙමින්...",
+    },
     goodToKnow: {
       label: "දැනගැනීම සඳහා",
       heading: "දැනගත යුතු කරුණු",
@@ -274,7 +348,7 @@ export const translations = {
         {
           title: "ඇඳුම් රටාව",
           description:
-            "විධිමත් / සම්ප්‍රදායික ඇඳුම් අඳින්න. කරුණාකර රතු හෝ සුදු පාට ඇඳුම් (මනාලියගේ පාට) අඳින්නෙපා.",
+            "විශේෂිත ඇඳුම් රටාවක් නැත — ඔබට කැමති ලෙස එන්න! අපගේ විවාහ වර්ණය වන රක්ත රතු (Ruby Red) පැහැයෙන් සැරසී ඒමට කැමති නම් අපි එයට කැමතියි.",
         },
         {
           title: "වාහන නැවැත්වීම",

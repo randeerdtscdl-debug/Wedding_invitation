@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Heart, Users } from "lucide-react";
+import { motion, Variants } from "framer-motion";
+import { Users } from "lucide-react";
 import { supabase, RSVP_TABLE } from "@/lib/supabaseClient";
+import { useLanguage } from "@/lib/i18n";
 
 interface AttendingGuest {
   id: string;
@@ -16,10 +17,15 @@ interface AttendingGuest {
  * Public-facing wall. Deliberately selects ONLY id, full_name, photo_url —
  * never contact info, guest_count, or messages — so this component cannot
  * leak private RSVP data even if its rendering logic changes later.
+ *
+ * `full_name` is still fetched (used only as the image `alt` text for
+ * accessibility/screen readers) but is never rendered as visible text —
+ * the wall is a pure photo mosaic.
  */
 export default function GuestWall() {
   const [guests, setGuests] = useState<AttendingGuest[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t, isSinhala } = useLanguage();
 
   useEffect(() => {
     let isMounted = true;
@@ -69,9 +75,40 @@ export default function GuestWall() {
     };
   }, []);
 
+  // Guests without a photo don't get a slot on the wall — this is a photo
+  // mosaic, so a placeholder tile would look like an error rather than a
+  // guest. They're still fully saved in the RSVP table either way.
+  const guestsWithPhotos = guests.filter((g) => g.photo_url);
+
+  // A rotation of distinct entrance animations — fade+rise, slide from the
+  // left, slide from the right, a gentle spin-in, a pop — so neighbouring
+  // photos don't all move in lockstep.
+  const TILE_VARIANTS: Variants[] = [
+    {
+      hidden: { opacity: 0, y: 40, scale: 0.9 },
+      visible: { opacity: 1, y: 0, scale: 1 },
+    },
+    {
+      hidden: { opacity: 0, x: -50, rotate: -6 },
+      visible: { opacity: 1, x: 0, rotate: 0 },
+    },
+    {
+      hidden: { opacity: 0, x: 50, rotate: 6 },
+      visible: { opacity: 1, x: 0, rotate: 0 },
+    },
+    {
+      hidden: { opacity: 0, scale: 0.6, rotate: -10 },
+      visible: { opacity: 1, scale: 1, rotate: 0 },
+    },
+    {
+      hidden: { opacity: 0, y: -30, scale: 0.85 },
+      visible: { opacity: 1, y: 0, scale: 1 },
+    },
+  ];
+
   return (
     <section id="guest-wall" className="bg-cream px-6 py-24 sm:py-32">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -79,64 +116,78 @@ export default function GuestWall() {
           transition={{ duration: 0.8 }}
           className="text-center"
         >
-          <p className="font-display text-lg uppercase tracking-[0.3em] text-gold-dark">
-            Joining The Celebration
+          <p
+            className={`font-display text-lg text-gold-dark ${
+              isSinhala ? "font-sinhala tracking-wide" : "uppercase tracking-[0.3em]"
+            }`}
+          >
+            {t.guestWall.joining}
           </p>
-          <h2 className="mt-3 font-serif text-4xl sm:text-5xl font-semibold text-ruby">
-            Our Guests
+          <h2
+            className={`mt-3 font-serif text-4xl sm:text-5xl font-semibold text-ruby ${
+              isSinhala ? "font-sinhala" : ""
+            }`}
+          >
+            {t.guestWall.heading}
           </h2>
           <div className="mx-auto mt-6 h-px w-24 bg-gold" />
         </motion.div>
 
         {loading ? (
-          <p className="mt-14 text-center font-sans text-sm text-[#4A2020]/60">
-            Loading well-wishers...
+          <p
+            className={`mt-14 text-center font-sans text-sm text-[#4A2020]/60 ${
+              isSinhala ? "font-sinhala" : ""
+            }`}
+          >
+            {t.guestWall.loading}
           </p>
-        ) : guests.length === 0 ? (
-          <p className="mt-14 text-center font-sans text-sm text-[#4A2020]/60">
-            Be the first to RSVP and appear here!
-          </p>
+        ) : guestsWithPhotos.length === 0 ? (
+          <div className="mt-14 flex flex-col items-center gap-3 text-center">
+            <Users size={28} className="text-gold" />
+            <p
+              className={`font-sans text-sm text-[#4A2020]/60 ${
+                isSinhala ? "font-sinhala" : ""
+              }`}
+            >
+              {t.guestWall.empty}
+            </p>
+          </div>
         ) : (
-          <div className="mt-14 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
-            {guests.map((guest, idx) => (
-              <motion.div
-                key={guest.id}
-                initial={{ opacity: 0, y: 24, scale: 0.92 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 120,
-                  damping: 15,
-                  delay: (idx % 4) * 0.08,
-                }}
-                whileHover={{ y: -5 }}
-                className="group flex flex-col items-center gap-3 rounded-2xl bg-ivory p-5 card-shadow transition-shadow duration-300 hover:shadow-xl"
-              >
-                {/* Fixed-size square frame — every guest photo, whatever its
-                    original dimensions, is cropped to fill this frame so the
-                    grid always stays perfectly aligned. */}
-                <div className="relative aspect-square w-full max-w-[120px] overflow-hidden rounded-full ring-4 ring-gold/40 transition-all duration-300 group-hover:ring-gold">
-                  {guest.photo_url ? (
+          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 sm:grid-cols-4 sm:gap-5 md:grid-cols-5">
+            {guestsWithPhotos.map((guest, idx) => {
+              const variant = TILE_VARIANTS[idx % TILE_VARIANTS.length];
+
+              return (
+                <motion.div
+                  key={guest.id}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.4 }}
+                  variants={variant}
+                  transition={{
+                    type: "spring",
+                    stiffness: 110,
+                    damping: 14,
+                    delay: (idx % 10) * 0.06,
+                  }}
+                  whileHover={{ scale: 1.06 }}
+                  className="group"
+                >
+                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl ring-4 ring-gold/40 shadow-lg transition-all duration-300 group-hover:ring-gold group-hover:shadow-2xl">
                     <Image
-                      src={guest.photo_url}
+                      src={guest.photo_url as string}
                       alt={guest.full_name}
                       fill
-                      sizes="120px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      sizes="(min-width: 768px) 18vw, 33vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-ruby-gradient text-gold">
-                      <Users size={28} />
-                    </div>
-                  )}
-                </div>
-                <p className="text-center font-sans text-xs font-medium text-[#2B1010] line-clamp-2">
-                  {guest.full_name}
-                </p>
-                <Heart size={12} className="text-gold" fill="currentColor" />
-              </motion.div>
-            ))}
+                    {/* Subtle ruby wash on hover so every tile reads as part
+                        of the same wedding theme, whatever photo is inside. */}
+                    <div className="absolute inset-0 bg-ruby-dark/0 transition-colors duration-300 group-hover:bg-ruby-dark/10" />
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

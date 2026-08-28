@@ -3,12 +3,15 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 const VENUE_QUERY = encodeURIComponent(
   "Monarch Imperial, Sri Jayawardenepura Kotte, Sri Lanka"
 );
 
 export default function MapSection() {
+  const { t, isSinhala } = useLanguage();
+
   return (
     <section id="venue" className="bg-ruby-gradient">
       {/* Full, clearly visible venue photo — only a soft bottom fade so the
@@ -18,7 +21,7 @@ export default function MapSection() {
           src="/images/venue-hotel.png"
           alt="Monarch Imperial venue"
           fill
-          sizes="1000vw"
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ruby-dark via-ruby-dark/10 to-transparent" />
@@ -29,15 +32,23 @@ export default function MapSection() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.8 }}
           >
-            <p className="font-display text-lg uppercase tracking-[0.3em] text-gold drop-shadow">
-              Join Us At
+            <p
+              className={`font-display text-lg text-gold drop-shadow ${
+                isSinhala ? "font-sinhala tracking-wide" : "uppercase tracking-[0.3em]"
+              }`}
+            >
+              {t.venue.joinUsAt}
             </p>
             <h2 className="mt-2 font-serif text-4xl sm:text-5xl font-semibold text-ivory drop-shadow-lg">
               Monarch Imperial
             </h2>
-            <p className="mt-3 flex items-center justify-center gap-2 font-sans text-sm text-ivory/90 drop-shadow">
+            <p
+              className={`mt-3 flex items-center justify-center gap-2 text-sm text-ivory/90 drop-shadow ${
+                isSinhala ? "font-sinhala" : "font-sans"
+              }`}
+            >
               <MapPin size={16} className="text-gold" />
-              Sri Jayawardenepura Kotte, Sri Lanka
+              {t.venue.location}
             </p>
           </motion.div>
         </div>
@@ -71,9 +82,11 @@ export default function MapSection() {
             href={`https://www.google.com/maps/dir/?api=1&destination=${VENUE_QUERY}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-block rounded-full bg-gold-gradient px-8 py-3 text-sm font-semibold uppercase tracking-widest text-ruby-dark shadow-lg transition-transform hover:scale-105"
+            className={`mt-6 inline-block rounded-full bg-gold-gradient px-8 py-3 text-sm font-semibold text-ruby-dark shadow-lg transition-transform hover:scale-105 ${
+              isSinhala ? "font-sinhala" : "uppercase tracking-widest"
+            }`}
           >
-            Get Directions
+            {t.venue.getDirections}
           </motion.a>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Cormorant_Garamond, Inter } from "next/font/google";
+import { Playfair_Display, Cormorant_Garamond, Inter, Noto_Sans_Sinhala } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -23,6 +23,13 @@ const inter = Inter({
   display: "swap",
 });
 
+const notoSinhala = Noto_Sans_Sinhala({
+  subsets: ["sinhala"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sinhala",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Umini & Randeera | We're Getting Married",
   description:
@@ -43,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${playfair.variable} ${cormorant.variable} ${inter.variable} font-sans bg-cream text-[#2B1010] antialiased`}
+        className={`${playfair.variable} ${cormorant.variable} ${inter.variable} ${notoSinhala.variable} font-sans bg-cream text-[#2B1010] antialiased`}
       >
         {children}
       </body>

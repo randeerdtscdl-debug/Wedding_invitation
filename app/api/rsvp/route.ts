@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/mailer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { GUEST_PHOTOS_BUCKET, RSVP_TABLE } from "@/lib/supabaseClient";
 
 export const runtime = "nodejs";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const COUPLE_NOTIFICATION_EMAIL =
   process.env.COUPLE_NOTIFICATION_EMAIL || "your-email@example.com";
-// Resend requires a sender on a domain you've verified with them.
-// See the setup instructions for how to configure this.
-const RESEND_FROM_ADDRESS =
-  process.env.RESEND_FROM_ADDRESS || "RSVP <rsvp@yourdomain.com>";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -45,9 +39,11 @@ export async function POST(req: NextRequest) {
     const photo = formData.get("photo") as File | null;
 
     // --- Validation ---
-    if (!fullName || !email) {
+    // Name, email, phone, and a photo are all required so every RSVP can
+    // appear on the Guest Wall and the couple always has a way to reach back.
+    if (!fullName || !email || !phone) {
       return NextResponse.json(
-        { error: "Full name and email address are required." },
+        { error: "Full name, email address, and phone number are all required." },
         { status: 400 }
       );
     }
@@ -63,52 +59,53 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (!photo || photo.size === 0) {
+      return NextResponse.json(
+        { error: "Please upload a photo to complete your RSVP." },
+        { status: 400 }
+      );
+    }
+    if (!ALLOWED_IMAGE_TYPES.includes(photo.type)) {
+      return NextResponse.json(
+        { error: "Unsupported photo format. Please upload a JPG, PNG, WEBP or HEIC image." },
+        { status: 400 }
+      );
+    }
+    if (photo.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "Photo must be smaller than 5MB." },
+        { status: 400 }
+      );
+    }
     const guestCount = Math.min(Math.max(parseInt(guestCountRaw, 10) || 1, 1), 10);
 
-    let photoUrl: string | null = null;
+    // --- Photo upload ---
+    const arrayBuffer = await photo.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const fileExt = photo.name.split(".").pop() || "jpg";
+    const safeName = fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+    const fileName = `${Date.now()}-${safeName}.${fileExt}`;
 
-    // --- Photo upload (only relevant when attending) ---
-    if (photo && photo.size > 0) {
-      if (!ALLOWED_IMAGE_TYPES.includes(photo.type)) {
-        return NextResponse.json(
-          { error: "Unsupported photo format. Please upload a JPG, PNG, WEBP or HEIC image." },
-          { status: 400 }
-        );
-      }
-      if (photo.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: "Photo must be smaller than 5MB." },
-          { status: 400 }
-        );
-      }
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(GUEST_PHOTOS_BUCKET)
+      .upload(fileName, buffer, {
+        contentType: photo.type,
+        upsert: false,
+      });
 
-      const arrayBuffer = await photo.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const fileExt = photo.name.split(".").pop() || "jpg";
-      const safeName = fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
-      const fileName = `${Date.now()}-${safeName}.${fileExt}`;
-
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from(GUEST_PHOTOS_BUCKET)
-        .upload(fileName, buffer, {
-          contentType: photo.type,
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error("Supabase storage upload error:", uploadError);
-        return NextResponse.json(
-          { error: "We couldn't upload your photo. Please try again." },
-          { status: 500 }
-        );
-      }
-
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from(GUEST_PHOTOS_BUCKET)
-        .getPublicUrl(fileName);
-
-      photoUrl = publicUrlData.publicUrl;
+    if (uploadError) {
+      console.error("Supabase storage upload error:", uploadError);
+      return NextResponse.json(
+        { error: "We couldn't upload your photo. Please try again." },
+        { status: 500 }
+      );
     }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from(GUEST_PHOTOS_BUCKET)
+      .getPublicUrl(fileName);
+
+    const photoUrl = publicUrlData.publicUrl;
 
     // --- Database insert ---
     const { data: inserted, error: insertError } = await supabaseAdmin
@@ -135,13 +132,12 @@ export async function POST(req: NextRequest) {
 
     // --- Email notification to the couple (non-blocking best-effort) ---
     try {
-      if (process.env.RESEND_API_KEY) {
-        await resend.emails.send({
-          from: RESEND_FROM_ADDRESS,
-          to: COUPLE_NOTIFICATION_EMAIL,
-          subject: `New RSVP: ${fullName} — ${
-            attendanceStatus === "attending" ? "Attending 🎉" : "Regretfully Declining"
-          }`,
+      await sendMail({
+        to: COUPLE_NOTIFICATION_EMAIL,
+        fromName: WEDDING_DETAILS.coupleNames,
+        subject: `New RSVP: ${fullName} — ${
+          attendanceStatus === "attending" ? "Attending 🎉" : "Regretfully Declining"
+        }`,
           html: `
             <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
               <h2 style="color:#8B0000;">New RSVP Received</h2>
@@ -170,25 +166,23 @@ export async function POST(req: NextRequest) {
               }
             </div>
           `,
-        });
-      }
+      });
     } catch (emailError) {
       // We deliberately do not fail the whole request if only the email fails —
       // the RSVP is already safely stored in Supabase.
-      console.error("Resend email error (couple notification):", emailError);
+      console.error("Mailer error (couple notification):", emailError);
     }
 
     // --- Confirmation email to the guest, with wedding details & location ---
     try {
-      if (process.env.RESEND_API_KEY) {
-        const isAttending = attendanceStatus === "attending";
-        await resend.emails.send({
-          from: RESEND_FROM_ADDRESS,
-          to: email,
-          subject: isAttending
-            ? `You're Invited: ${WEDDING_DETAILS.coupleNames}'s Wedding — ${WEDDING_DETAILS.dateLabel}`
-            : `Thank You For Your RSVP — ${WEDDING_DETAILS.coupleNames}`,
-          html: `
+      const isAttending = attendanceStatus === "attending";
+      await sendMail({
+        to: email,
+        fromName: WEDDING_DETAILS.coupleNames,
+        subject: isAttending
+          ? `You're Invited: ${WEDDING_DETAILS.coupleNames}'s Wedding — ${WEDDING_DETAILS.dateLabel}`
+          : `Thank You For Your RSVP — ${WEDDING_DETAILS.coupleNames}`,
+        html: `
             <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; color:#2B1010;">
               <h2 style="color:#8B0000; margin-bottom:4px;">${escapeHtml(
                 WEDDING_DETAILS.coupleNames
@@ -235,12 +229,11 @@ export async function POST(req: NextRequest) {
               </p>
             </div>
           `,
-        });
-      }
+      });
     } catch (guestEmailError) {
       // Same best-effort handling — a failed guest confirmation email should
       // never block the RSVP from being saved.
-      console.error("Resend email error (guest confirmation):", guestEmailError);
+      console.error("Mailer error (guest confirmation):", guestEmailError);
     }
 
     return NextResponse.json({ success: true, rsvp: inserted }, { status: 201 });

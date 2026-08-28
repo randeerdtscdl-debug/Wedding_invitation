@@ -1,36 +1,29 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ClipboardCheck, Sparkles, UtensilsCrossed, Music } from "lucide-react";
+import {
+  ClipboardCheck,
+  Sparkles,
+  UtensilsCrossed,
+  Music,
+  Heart,
+  Car,
+} from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
-const events = [
-  {
-    time: "9:15 AM",
-    title: "Poruwa Ceremony",
-    description: "Traditional rituals begin — the event officially opens",
-    icon: Sparkles,
-  },
-  {
-    time: "10:00 AM",
-    title: "Registration & Cake Cutting",
-    description: "Guest registration, followed by the cake cutting & toast",
-    icon: ClipboardCheck,
-  },
-  {
-    time: "11:30 AM",
-    title: "Buffet Lunch",
-    description: "A feast for family & friends",
-    icon: UtensilsCrossed,
-  },
-  {
-    time: "12:30 PM",
-    title: "Music & Celebration",
-    description: "Dancing the afternoon away",
-    icon: Music,
-  },
+const icons = [Sparkles, ClipboardCheck, UtensilsCrossed, Music, Heart, Car];
+const times = [
+  "9:15 AM",
+  "10:00 AM",
+  "11:30 AM",
+  "12:30 PM",
+  "1:00 PM",
+  "3:30 PM",
 ];
 
 export default function PoruwaTimeline() {
+  const { t, isSinhala } = useLanguage();
+
   return (
     <section id="timeline" className="bg-cream px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-4xl">
@@ -41,11 +34,19 @@ export default function PoruwaTimeline() {
           transition={{ duration: 0.8 }}
           className="text-center"
         >
-          <p className="font-display text-lg uppercase tracking-[0.3em] text-gold-dark">
-            The Big Day
+          <p
+            className={`font-display text-lg text-gold-dark ${
+              isSinhala ? "font-sinhala tracking-wide" : "uppercase tracking-[0.3em]"
+            }`}
+          >
+            {t.timeline.bigDay}
           </p>
-          <h2 className="mt-3 font-serif text-4xl sm:text-5xl font-semibold text-ruby">
-            Order Of The Day
+          <h2
+            className={`mt-3 font-serif text-4xl sm:text-5xl font-semibold text-ruby ${
+              isSinhala ? "font-sinhala" : ""
+            }`}
+          >
+            {t.timeline.heading}
           </h2>
           <div className="mx-auto mt-6 h-px w-24 bg-gold" />
         </motion.div>
@@ -60,8 +61,8 @@ export default function PoruwaTimeline() {
             className="absolute left-6 top-0 h-full w-px bg-gradient-to-b from-gold via-gold/60 to-gold/10 sm:left-1/2"
           />
           <ul className="space-y-10">
-            {events.map((event, idx) => {
-              const Icon = event.icon;
+            {t.timeline.events.map((event, idx) => {
+              const Icon = icons[idx];
               const isLeft = idx % 2 === 0;
               return (
                 <motion.li
@@ -102,12 +103,20 @@ export default function PoruwaTimeline() {
                     className="rounded-xl bg-ivory p-5 card-shadow"
                   >
                     <p className="font-serif text-lg font-semibold text-gold-dark">
-                      {event.time}
+                      {times[idx]}
                     </p>
-                    <p className="mt-1 font-sans text-base font-medium text-ruby">
+                    <p
+                      className={`mt-1 font-sans text-base font-medium text-ruby ${
+                        isSinhala ? "font-sinhala" : ""
+                      }`}
+                    >
                       {event.title}
                     </p>
-                    <p className="mt-1 font-sans text-sm text-[#4A2020]/80">
+                    <p
+                      className={`mt-1 font-sans text-sm text-[#4A2020]/80 ${
+                        isSinhala ? "font-sinhala" : ""
+                      }`}
+                    >
                       {event.description}
                     </p>
                   </motion.div>

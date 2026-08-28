@@ -18,6 +18,8 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
 
 export const GUEST_PHOTOS_BUCKET = "guest-photos";
 export const RSVP_TABLE = "rsvps";
+export const MEMORY_PHOTOS_BUCKET = "memory-photos";
+export const MEMORIES_TABLE = "memories";
 
 export type AttendanceStatus = "attending" | "declining";
 
@@ -31,4 +33,15 @@ export interface RsvpRecord {
   phone: string | null;
   message: string | null;
   photo_url: string | null;
+}
+
+export type MemoryRelatedTo = "couple" | "bride" | "groom";
+
+export interface MemoryRecord {
+  id?: string;
+  created_at?: string;
+  guest_name: string | null;
+  related_to: MemoryRelatedTo;
+  comment: string;
+  photo_url: string;
 }

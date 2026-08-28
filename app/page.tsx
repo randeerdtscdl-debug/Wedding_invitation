@@ -8,14 +8,20 @@ import DetailsSection from "@/components/DetailsSection";
 import PoruwaTimeline from "@/components/PoruwaTimeline";
 import MapSection from "@/components/MapSection";
 import GallerySection from "@/components/GallerySection";
+import GoodToKnowSection from "@/components/GoodToKnowSection";
 import RsvpForm from "@/components/RsvpForm";
 import GuestWall from "@/components/GuestWall";
+import MemoriesWall from "@/components/MemoriesWall";
+import LanguageToggle from "@/components/LanguageToggle";
+import { LanguageProvider, useLanguage } from "@/lib/i18n";
 
-export default function Home() {
+function HomeContent() {
   const [introComplete, setIntroComplete] = useState(false);
+  const { t, isSinhala } = useLanguage();
 
   return (
     <main className="relative">
+      <LanguageToggle />
       <IntroOverlay onComplete={() => setIntroComplete(true)} />
       <AudioPlayer shouldPlay={introComplete} />
 
@@ -26,19 +32,33 @@ export default function Home() {
           <PoruwaTimeline />
           <MapSection />
           <GallerySection />
-          <RsvpForm />
+          <GoodToKnowSection />
           <GuestWall />
+          <RsvpForm />
+          <MemoriesWall />
 
           <footer className="bg-ruby-dark px-6 py-10 text-center">
             <p className="font-display text-lg italic text-gold">
               Umini &amp; Randeera
             </p>
-            <p className="mt-2 font-sans text-xs uppercase tracking-[0.2em] text-ivory/50">
-              22nd October 2026 · Made with love
+            <p
+              className={`mt-2 font-sans text-xs text-ivory/50 ${
+                isSinhala ? "font-sinhala" : "uppercase tracking-[0.2em]"
+              }`}
+            >
+              {t.footer.dateMadeWithLove}
             </p>
           </footer>
         </>
       )}
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <LanguageProvider>
+      <HomeContent />
+    </LanguageProvider>
   );
 }
