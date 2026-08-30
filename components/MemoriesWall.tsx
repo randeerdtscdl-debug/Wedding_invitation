@@ -44,7 +44,10 @@ export default function MemoriesWall() {
 
     fetchMemories();
 
-    // Live updates: newly submitted memories slide in without a page refresh.
+    // Live updates from OTHER guests/devices: newly submitted memories slide
+    // in without a page refresh. (For the guest who just submitted on this
+    // same page, the "memory:added" event below fires instantly and doesn't
+    // wait on this subscription — see the dedupe check in both handlers.)
     const channel = supabase
       .channel("memories-wall")
       .on(
@@ -52,15 +55,33 @@ export default function MemoriesWall() {
         { event: "INSERT", schema: "public", table: MEMORIES_TABLE },
         (payload) => {
           const row = payload.new as Memory;
-          setMemories((prev) => [row, ...prev]);
+          setMemories((prev) =>
+            prev.some((m) => m.id === row.id) ? prev : [row, ...prev]
+          );
           setIndex(0);
         }
       )
       .subscribe();
 
+    // Instant update for the guest who just submitted, on this same page —
+    // dispatched by RsvpForm right after a successful /api/memories call.
+    // This doesn't depend on Supabase Realtime being enabled/configured
+    // correctly, so the submitter always sees their memory appear right
+    // away regardless.
+    const handleLocalMemory = (e: Event) => {
+      const detail = (e as CustomEvent<Memory>).detail;
+      if (!detail) return;
+      setMemories((prev) =>
+        prev.some((m) => m.id === detail.id) ? prev : [detail, ...prev]
+      );
+      setIndex(0);
+    };
+    window.addEventListener("memory:added", handleLocalMemory);
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
+      window.removeEventListener("memory:added", handleLocalMemory);
     };
   }, []);
 

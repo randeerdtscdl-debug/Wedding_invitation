@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState, useRef, useEffect, FormEvent, ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2,
@@ -34,6 +34,8 @@ export default function RsvpForm() {
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [submittedName, setSubmittedName] = useState("");
+  const autoDownloadRef = useRef<HTMLAnchorElement>(null);
+  const hasAutoDownloadedRef = useRef(false);
 
   // --- Inline "Add Your Memories" mini-form, shown right after a
   // successful RSVP so guests can immediately share a photo + message
@@ -48,6 +50,22 @@ export default function RsvpForm() {
   const label = isSinhala ? "font-sinhala" : "uppercase tracking-widest";
   const labelWide = isSinhala ? "font-sinhala" : "uppercase tracking-[0.3em]";
   const body = isSinhala ? "font-sinhala" : "";
+
+  // Auto-download the invitation 5 seconds after a successful RSVP, so
+  // guests who don't notice (or don't tap) the button still end up with
+  // it. The button itself stays visible the whole time for a manual
+  // re-download. Guarded so this only ever fires once per submission.
+  useEffect(() => {
+    if (state !== "success" || !submittedName) return;
+    hasAutoDownloadedRef.current = false;
+    const timer = setTimeout(() => {
+      if (!hasAutoDownloadedRef.current) {
+        hasAutoDownloadedRef.current = true;
+        autoDownloadRef.current?.click();
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [state, submittedName]);
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -166,6 +184,13 @@ export default function RsvpForm() {
         throw new Error(data?.error || "Something went wrong. Please try again.");
       }
 
+      // Let the Memories wall (a separate component further down the page)
+      // know immediately — it doesn't wait on Supabase Realtime, so the
+      // guest who just submitted sees their memory appear right away.
+      if (data?.memory) {
+        window.dispatchEvent(new CustomEvent("memory:added", { detail: data.memory }));
+      }
+
       setMemoryState("success");
       resetMemoryForm();
     } catch (err) {
@@ -211,13 +236,19 @@ export default function RsvpForm() {
             </p>
 
             {submittedName && (
-              <a
-                href={`/api/invitation?name=${encodeURIComponent(submittedName)}`}
-                download
-                className={`mt-2 flex items-center gap-2 rounded-full bg-gold-gradient px-7 py-3 text-sm font-semibold text-ruby-dark shadow-lg transition-transform hover:scale-105 ${label}`}
-              >
-                <Download size={18} /> {t.rsvp.downloadInvitation}
-              </a>
+              <>
+                <a
+                  ref={autoDownloadRef}
+                  href={`/api/invitation?name=${encodeURIComponent(submittedName)}`}
+                  download
+                  className={`mt-2 flex items-center gap-2 rounded-full bg-gold-gradient px-7 py-3 text-sm font-semibold text-ruby-dark shadow-lg transition-transform hover:scale-105 ${label}`}
+                >
+                  <Download size={18} /> {t.rsvp.downloadInvitation}
+                </a>
+                <p className={`-mt-1 font-sans text-[11px] text-ivory/60 ${body}`}>
+                  {t.rsvp.autoDownloadNote}
+                </p>
+              </>
             )}
 
             <button

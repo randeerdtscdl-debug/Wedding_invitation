@@ -125,10 +125,32 @@ create policy "Public read access to memory photos"
   to public
   using (bucket_id = 'memory-photos');
 
+-- 6. ENABLE REALTIME (so the Guest Wall and Memories wall update live,
+--    without a page refresh, the instant a new row is inserted).
+-- ---------------------------------------------------------
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'rsvps'
+  ) then
+    alter publication supabase_realtime add table public.rsvps;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'memories'
+  ) then
+    alter publication supabase_realtime add table public.memories;
+  end if;
+end $$;
+
 -- =========================================================
 -- Done. Verify in the Supabase dashboard:
 --   Table Editor → rsvps          (table exists, RLS enabled)
 --   Table Editor → memories       (table exists, RLS enabled)
 --   Storage → guest-photos        (bucket exists, marked Public)
 --   Storage → memory-photos       (bucket exists, marked Public)
+--   Database → Replication        (rsvps & memories both listed under
+--                                   the supabase_realtime publication)
 -- =========================================================

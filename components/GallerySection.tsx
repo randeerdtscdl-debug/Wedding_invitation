@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
@@ -14,11 +14,31 @@ const GALLERY_IMAGES = Array.from(
 
 const SLIDE_DURATION = 4500;
 
+// The "puzzle wall" below the hero slider always shows exactly 9 tiles
+// (3 rows × 3 columns) — instead of growing to fit all 17 photos, tiles
+// individually swap to a new photo every few seconds with a flip
+// animation, so every photo eventually appears without the page growing
+// taller.
+const TILE_COUNT = 9;
+const TILE_SWAP_INTERVAL = 1800;
+
 export default function GallerySection() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
   const { t, isSinhala } = useLanguage();
+
+  // Which photo (index into GALLERY_IMAGES) each of the 9 wall tiles is
+  // currently showing, plus a "flip key" per tile so React remounts just
+  // that tile's inner content when it swaps, triggering its own flip
+  // animation independently of the others.
+  const [tilePhotos, setTilePhotos] = useState<number[]>(() =>
+    Array.from({ length: TILE_COUNT }, (_, i) => i % GALLERY_IMAGES.length)
+  );
+  const [tileKeys, setTileKeys] = useState<number[]>(() =>
+    Array.from({ length: TILE_COUNT }, () => 0)
+  );
+  const nextPoolPointer = useRef(TILE_COUNT % GALLERY_IMAGES.length);
 
   const close = () => setActiveIndex(null);
   const showNext = () =>
@@ -49,6 +69,36 @@ export default function GallerySection() {
     const timer = setInterval(nextSlide, SLIDE_DURATION);
     return () => clearInterval(timer);
   }, [autoPlay, activeIndex, nextSlide]);
+
+  // Puzzle wall: every tick, swap ONE random tile to the next photo in the
+  // pool (skipping any photo already showing on another tile), so the wall
+  // feels alive without ever changing size or all flipping at once. Pauses
+  // while the lightbox is open.
+  useEffect(() => {
+    if (activeIndex !== null) return;
+    const timer = setInterval(() => {
+      setTilePhotos((prev) => {
+        const tileToSwap = Math.floor(Math.random() * TILE_COUNT);
+        let candidate = nextPoolPointer.current % GALLERY_IMAGES.length;
+        let attempts = 0;
+        while (prev.includes(candidate) && attempts < GALLERY_IMAGES.length) {
+          candidate = (candidate + 1) % GALLERY_IMAGES.length;
+          attempts += 1;
+        }
+        nextPoolPointer.current = (candidate + 1) % GALLERY_IMAGES.length;
+
+        const next = [...prev];
+        next[tileToSwap] = candidate;
+        setTileKeys((prevKeys) => {
+          const nextKeys = [...prevKeys];
+          nextKeys[tileToSwap] += 1;
+          return nextKeys;
+        });
+        return next;
+      });
+    }, TILE_SWAP_INTERVAL);
+    return () => clearInterval(timer);
+  }, [activeIndex]);
 
   return (
     <section id="gallery" className="bg-cream px-6 py-24 sm:py-32">
@@ -152,43 +202,40 @@ export default function GallerySection() {
           </div>
         </motion.div>
 
-        {/* Browsable grid — click any tile to open the full lightbox */}
-        <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
-          {GALLERY_IMAGES.map((src, idx) => (
-            <motion.button
-              key={src}
-              initial={{ opacity: 0, y: 40, scale: 0.9, rotate: idx % 2 === 0 ? -2 : 2 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{
-                type: "spring",
-                stiffness: 110,
-                damping: 16,
-                delay: (idx % 3) * 0.12,
-              }}
-              whileHover={{ y: -8, scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setActiveIndex(idx)}
-              className="group relative aspect-[3/4] overflow-hidden rounded-xl card-shadow"
+        {/* Puzzle wall — a fixed 3×3 grid of tiles that individually flip
+            to a new photo every couple of seconds, like puzzle pieces
+            turning over, so all 17 photos surface over time without the
+            page ever growing taller. Click any tile for the full lightbox. */}
+        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-3 gap-3 sm:gap-5">
+          {tilePhotos.map((photoIdx, tileIdx) => (
+            <button
+              key={tileIdx}
+              onClick={() => setActiveIndex(photoIdx)}
+              style={{ perspective: 1200 }}
+              className="group relative aspect-square overflow-hidden rounded-xl card-shadow sm:rounded-2xl"
             >
-              <Image
-                src={src}
-                alt={`Umini & Randeera pre-wedding photo ${idx + 1}`}
-                fill
-                sizes="(max-width: 640px) 50vw, 33vw"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.15]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-ruby-dark/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-gold/0 transition-all duration-300 group-hover:ring-gold/60" />
-              <motion.span
-                initial={{ opacity: 0, y: 8 }}
-                className={`absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-ivory/90 px-3 py-1 font-sans text-[10px] text-ruby opacity-0 shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:opacity-100 ${
-                  isSinhala ? "font-sinhala" : "uppercase tracking-widest"
-                }`}
-              >
-                {t.gallery.view}
-              </motion.span>
-            </motion.button>
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={tileKeys[tileIdx]}
+                  initial={{ rotateY: 90, opacity: 0.4 }}
+                  animate={{ rotateY: 0, opacity: 1 }}
+                  exit={{ rotateY: -90, opacity: 0.4 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                  style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
+                  className="absolute inset-0"
+                >
+                  <Image
+                    src={GALLERY_IMAGES[photoIdx]}
+                    alt={`Umini & Randeera pre-wedding photo ${photoIdx + 1}`}
+                    fill
+                    sizes="(max-width: 640px) 33vw, 22vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.12]"
+                  />
+                </motion.div>
+              </AnimatePresence>
+              <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-t from-ruby-dark/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:rounded-2xl" />
+              <span className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-gold/0 transition-all duration-300 group-hover:ring-gold/60 sm:rounded-2xl" />
+            </button>
           ))}
         </div>
       </div>

@@ -87,6 +87,7 @@ export interface Translations {
     thankYou: string;
     received: string;
     downloadInvitation: string;
+    autoDownloadNote: string;
     submitAnother: string;
     fullName: string;
     fullNamePlaceholder: string;
@@ -245,6 +246,7 @@ export const translations: Record<Language, Translations> = {
       received:
         "Your RSVP has been received. A confirmation with the wedding details is on its way to your email.",
       downloadInvitation: "Download Your Invitation",
+      autoDownloadNote: "Your invitation will download automatically in a few seconds.",
       submitAnother: "Submit Another Response",
       fullName: "Full Name",
       fullNamePlaceholder: "Your full name",
@@ -426,6 +428,7 @@ export const translations: Record<Language, Translations> = {
       received:
         "ඔබගේ RSVP එක ලැබී ඇත. විවාහ මංගල්‍ය විස්තර සහිත තහවුරු කිරීමේ පණිවිඩයක් ඔබගේ විද්‍යුත් තැපෑලට එවනු ලැබේ.",
       downloadInvitation: "ඔබගේ ආරාධනා පත්‍රය බාගන්න",
+      autoDownloadNote: "තත්පර කිහිපයකින් ඔබගේ ආරාධනා පත්‍රය ස්වයංක්‍රීයව බාගත වේ.",
       submitAnother: "තවත් පිළිතුරක් යොමු කරන්න",
       fullName: "සම්පූර්ණ නම",
       fullNamePlaceholder: "ඔබගේ සම්පූර්ණ නම",

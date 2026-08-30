@@ -27,8 +27,12 @@ export default function GoodToKnowSection() {
       id="good-to-know"
       className="relative overflow-hidden px-6 py-24 sm:py-32"
     >
-      {/* Background video, scoped to just this section, with a ruby wash
-          overlay so the cards & text above stay perfectly legible. */}
+      {/* Background video, scoped to just this section. This clip is
+          already light and cream-toned (rose petals + an invitation on
+          stone), so the overlay stays soft — just enough for text to stay
+          legible without hiding the motion. It fades to solid ivory at the
+          very top/bottom edges so it blends into the sections above and
+          below instead of cutting off sharply. */}
       <video
         autoPlay
         muted
@@ -38,8 +42,8 @@ export default function GoodToKnowSection() {
       >
         <source src="/video/intro-cinematicww.mp4" type="video/mp4" />
       </video>
-      <div className="absolute inset-0 bg-ivory/90" />
-      <div className="absolute inset-0 bg-gradient-to-b from-ivory via-ivory/85 to-ivory" />
+      <div className="absolute inset-0 bg-ivory/25" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ivory via-transparent to-ivory" />
 
       <div className="relative mx-auto max-w-5xl">
         <motion.div
