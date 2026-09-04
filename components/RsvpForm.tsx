@@ -37,6 +37,26 @@ export default function RsvpForm() {
   const autoDownloadRef = useRef<HTMLAnchorElement>(null);
   const hasAutoDownloadedRef = useRef(false);
 
+  // Full-screen celebration video, played once right after a successful
+  // RSVP. The normal "Thank You" card (and everything after it) stays
+  // hidden until the video ends, then everything reveals as usual.
+  const [showCelebration, setShowCelebration] = useState(false);
+  // Starts muted so autoplay is guaranteed on every browser (unmuted
+  // autoplay can silently fail after an async request, since some
+  // browsers only allow it within the same synchronous gesture) — the
+  // guest can tap the sound icon to turn audio on.
+  const [celebrationMuted, setCelebrationMuted] = useState(true);
+  const celebrationVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Safety net: if the video never fires "ended" (fails to load, gets
+  // stuck buffering, etc.) the guest is never trapped behind it — it
+  // falls back to the normal thank-you screen on its own.
+  useEffect(() => {
+    if (!showCelebration) return;
+    const fallback = setTimeout(() => setShowCelebration(false), 30000);
+    return () => clearTimeout(fallback);
+  }, [showCelebration]);
+
   // --- Inline "Add Your Memories" mini-form, shown right after a
   // successful RSVP so guests can immediately share a photo + message
   // that appears on the public Memories wall. ---
@@ -56,7 +76,7 @@ export default function RsvpForm() {
   // it. The button itself stays visible the whole time for a manual
   // re-download. Guarded so this only ever fires once per submission.
   useEffect(() => {
-    if (state !== "success" || !submittedName) return;
+    if (state !== "success" || !submittedName || showCelebration) return;
     hasAutoDownloadedRef.current = false;
     const timer = setTimeout(() => {
       if (!hasAutoDownloadedRef.current) {
@@ -65,7 +85,7 @@ export default function RsvpForm() {
       }
     }, 5000);
     return () => clearTimeout(timer);
-  }, [state, submittedName]);
+  }, [state, submittedName, showCelebration]);
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,6 +150,7 @@ export default function RsvpForm() {
 
       setSubmittedName(fullName.trim());
       setState("success");
+      setShowCelebration(true);
       resetForm();
     } catch (err) {
       setState("error");
@@ -220,7 +241,48 @@ export default function RsvpForm() {
           </p>
         </motion.div>
 
-        {state === "success" ? (
+        <AnimatePresence>
+          {showCelebration && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black"
+            >
+              <video
+                ref={celebrationVideoRef}
+                autoPlay
+                playsInline
+                muted={celebrationMuted}
+                className="h-full w-full object-contain sm:object-cover"
+                onEnded={() => setShowCelebration(false)}
+                onError={() => setShowCelebration(false)}
+              >
+                <source src="/video/rsvp-celebration.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute right-5 top-5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCelebrationMuted((m) => !m)}
+                  aria-label={celebrationMuted ? "Unmute" : "Mute"}
+                  className="rounded-full bg-black/40 px-4 py-2 font-sans text-xs font-medium text-ivory/90 backdrop-blur transition-colors hover:bg-black/60"
+                >
+                  {celebrationMuted ? "🔇" : "🔊"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCelebration(false)}
+                  className="rounded-full bg-black/40 px-4 py-2 font-sans text-xs font-medium text-ivory/90 backdrop-blur transition-colors hover:bg-black/60"
+                >
+                  Skip
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {state === "success" && !showCelebration ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -264,7 +326,7 @@ export default function RsvpForm() {
             successful RSVP so the moment is fresh. Fully separate submit
             flow from the RSVP itself: this posts to /api/memories and
             feeds the public Memories wall further down the page. */}
-        {state === "success" && (
+        {state === "success" && !showCelebration && (
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}

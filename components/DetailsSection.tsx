@@ -13,8 +13,28 @@ export default function DetailsSection() {
   const { t, isSinhala } = useLanguage();
 
   return (
-    <section id="details" className="bg-ivory px-6 py-24 sm:py-32">
-      <div className="mx-auto max-w-5xl">
+    <section
+      id="details"
+      className="relative overflow-hidden bg-ivory px-6 py-24 sm:py-32"
+    >
+      {/* Background video, scoped to just this section — same treatment
+          as Good To Know: a soft ivory wash over it so the video reads
+          as ambient texture and the text on top stays fully legible,
+          fading to solid ivory at the top/bottom edges so it blends into
+          the sections above and below. */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      >
+        <source src="/video/Celebrate.mp4" type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-ivory/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ivory via-transparent to-ivory" />
+
+      <div className="relative mx-auto max-w-5xl">
         <motion.div
           initial="hidden"
           whileInView="visible"

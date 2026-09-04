@@ -6,10 +6,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
-// The couple's pre-wedding shoot photos, placed in /public/images/gallery/.
+// The couple's photos, placed in /public/images/gallery/.
 const GALLERY_IMAGES = Array.from(
-  { length: 17 },
-  (_, i) => `/images/gallery/photo-${i + 1}.jpg`
+  { length: 29 },
+  (_, i) => `/images/gallery/moment-${String(i + 1).padStart(2, "0")}.jpg`
 );
 
 const SLIDE_DURATION = 4500;

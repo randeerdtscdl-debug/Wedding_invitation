@@ -153,7 +153,7 @@ export default function GuestWall() {
             </p>
           </div>
         ) : (
-          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 sm:grid-cols-4 sm:gap-5 md:grid-cols-5">
+          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-x-4 gap-y-8 sm:grid-cols-4 sm:gap-x-6 sm:gap-y-10 md:grid-cols-5">
             {guestsWithPhotos.map((guest, idx) => {
               const variant = TILE_VARIANTS[idx % TILE_VARIANTS.length];
 
@@ -171,19 +171,27 @@ export default function GuestWall() {
                     delay: (idx % 10) * 0.06,
                   }}
                   whileHover={{ scale: 1.06 }}
-                  className="group"
+                  className="group mx-auto"
                 >
-                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl ring-4 ring-gold/40 shadow-lg transition-all duration-300 group-hover:ring-gold group-hover:shadow-2xl">
-                    <Image
-                      src={guest.photo_url as string}
-                      alt={guest.full_name}
-                      fill
-                      sizes="(min-width: 768px) 18vw, 33vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    {/* Subtle ruby wash on hover so every tile reads as part
-                        of the same wedding theme, whatever photo is inside. */}
-                    <div className="absolute inset-0 bg-ruby-dark/0 transition-colors duration-300 group-hover:bg-ruby-dark/10" />
+                  {/* Circular locket frame — fixed size so every guest
+                      photo, portrait or landscape, reads as the same
+                      neat round portrait. A soft gold ring + faint outer
+                      halo gives it a framed, keepsake feel rather than a
+                      plain grid tile. */}
+                  <div className="relative h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28">
+                    <div className="absolute inset-0 rounded-full bg-gold/20 blur-md transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
+                    <div className="relative h-full w-full overflow-hidden rounded-full ring-4 ring-gold/50 ring-offset-2 ring-offset-cream shadow-lg transition-all duration-300 group-hover:ring-gold group-hover:shadow-2xl">
+                      <Image
+                        src={guest.photo_url as string}
+                        alt={guest.full_name}
+                        fill
+                        sizes="(min-width: 768px) 112px, 80px"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      {/* Subtle ruby wash on hover so every portrait reads
+                          as part of the same wedding theme. */}
+                      <div className="absolute inset-0 rounded-full bg-ruby-dark/0 transition-colors duration-300 group-hover:bg-ruby-dark/10" />
+                    </div>
                   </div>
                 </motion.div>
               );
