@@ -142,6 +142,10 @@ export interface Translations {
     wallHeading: string;
     wallEmpty: string;
     wallLoading: string;
+    tapToView: string;
+    close: string;
+    previous: string;
+    next: string;
   };
   goodToKnow: {
     label: string;
@@ -303,6 +307,10 @@ export const translations: Record<Language, Translations> = {
       wallHeading: "Memories Wall",
       wallEmpty: "Be the first to share a memory — add yours in the RSVP form above!",
       wallLoading: "Loading memories...",
+      tapToView: "Tap to view full memory",
+      close: "Close",
+      previous: "Previous memory",
+      next: "Next memory",
     },
     goodToKnow: {
       label: "A Few Notes",
@@ -485,6 +493,10 @@ export const translations: Record<Language, Translations> = {
       wallHeading: "මතක බිත්තිය",
       wallEmpty: "පළමු මතකය බෙදාගන්නා තැනැත්තා ඔබ වන්න — ඉහත RSVP පෝරමයෙන් එක් කරන්න!",
       wallLoading: "මතක පූරණය වෙමින්...",
+      tapToView: "සම්පූර්ණ මතකය බැලීමට ඔබන්න",
+      close: "වසන්න",
+      previous: "පෙර මතකය",
+      next: "ඊළඟ මතකය",
     },
     goodToKnow: {
       label: "දැනගැනීම සඳහා",
